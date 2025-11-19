@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAI - AI Generative Storytelling</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent: #4a9eff;
+            --accent-hover: #3d8de6;
+            --border: #404040;
+            --danger: #ff4444;
+            --warning: #ffaa00;
+            --success: #44ff44;
+            --sidebar-width: 300px;
+        }
+
+        body.light-mode {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e8e8e8;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border: #d0d0d0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            height: 60px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .theme-toggle span {
+            padding: 5px 10px;
+            border-radius: 15px;
+            transition: all 0.3s;
+        }
+
+        .theme-toggle span.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            position: relative;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s;
+            position: relative;
+            min-width: 60px;
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+        }
+
+        /* Resize handle */
+        .resize-handle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            background: transparent;
+            z-index: 10;
+        }
+
+        .resize-handle:hover,
+        .resize-handle.resizing {
+            background: var(--accent);
+        }
+
+        .sidebar.collapsed .resize-handle {
+            display: none;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .collapse-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .collapse-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .new-conversation-btn {
+            flex: 1;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .sidebar.collapsed .new-conversation-btn {
+            padding: 10px;
+        }
+
+        .sidebar.collapsed .new-conversation-btn span {
+            display: none;
+        }
+
+        .new-conversation-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .search-box {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .sidebar.collapsed .search-box {
+            display: none;
+        }
+
+        /* Filter Chips */
+        .filter-chips {
+            padding: 15px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar.collapsed .filter-chips {
+            display: none;
+        }
+
+        .filter-chip {
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .filter-chip:hover {
+            background: var(--bg-primary);
+        }
+
+        .filter-chip.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .sidebar.collapsed .conversations-list {
+            display: none;
+        }
+
+        .conversation-section {
+            margin-bottom: 20px;
+        }
+
+        .conversation-section.collapsed .conversation-item {
+            display: none;
+        }
+
+        .section-header {
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-count {
+            background: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .section-toggle {
+            transition: transform 0.2s;
+        }
+
+        .conversation-section.collapsed .section-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .sidebar.collapsed .section-header span {
+            display: none;
+        }
+
+        .sidebar.collapsed .section-count {
+            display: none;
+        }
+
+        .conversation-item {
+            padding: 12px;
+            margin: 4px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .conversation-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .conversation-item.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .conversation-icon {
+            flex-shrink: 0;
+        }
+
+        .conversation-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+
+        .conversation-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .conversation-item.active .conversation-meta {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .sidebar.collapsed .conversation-text {
+            display: none;
+        }
+
+        .sidebar.collapsed .conversation-meta {
+            display: none;
+        }
+
+        .conversation-actions {
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .conversation-item:hover .conversation-actions {
+            opacity: 1;
+        }
+
+        .sidebar.collapsed .conversation-actions {
+            display: none;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        .action-btn:hover {
+            background: var(--bg-primary);
+        }
+
+        .conversation-item.active .action-btn {
+            color: white;
+        }
+
+        .conversation-item.active .action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .action-btn.favorite-btn.active {
+            color: #ffaa00;
+        }
+
+        .conversation-item.active .action-btn.favorite-btn.active {
+            color: #ffaa00;
+        }
+
+        /* Empty section message */
+        .empty-section {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .sidebar.collapsed .empty-section {
+            display: none;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-title-input {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .chat-title-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-tertiary);
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h2 {
+            margin-top: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .message-content {
+            flex: 1;
+            max-width: 80%;
+        }
+
+        .message.user .message-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .message.user .message-header {
+            flex-direction: row-reverse;
+        }
+
+        .message-author {
+            font-weight: 600;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .message-body {
+            line-height: 1.6;
+        }
+
+        .message.user .message-body {
+            background: var(--bg-secondary);
+            padding: 12px 16px;
+            border-radius: 12px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .video-result {
+            margin-top: 15px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .video-container {
+            display: flex;
+            gap: 20px;
+            padding: 15px;
+        }
+
+        .video-player {
+            width: 60%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .video-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .video-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .video-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .meta-value {
+            font-size: 14px;
+        }
+
+        .cuts-list {
+            padding: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .cut-item {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            cursor: grab;
+        }
+
+        .cut-item:active {
+            cursor: grabbing;
+        }
+
+        .cut-item.dragging {
+            opacity: 0.5;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            padding: 5px;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .cut-thumbnail {
+            width: 120px;
+            height: 68px;
+            background: #000;
+            border-radius: 6px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .cut-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cut-details {
+            flex: 1;
+        }
+
+        .cut-timecode {
+            font-family: 'Courier New', monospace;
+            color: var(--accent);
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .cut-description {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .cut-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .result-actions {
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .iteration-nav {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--bg-secondary);
+        }
+
+        /* Chat Input */
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            resize: none;
+            min-height: 50px;
+            max-height: 150px;
+            font-family: inherit;
+        }
+
+        .send-btn {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .send-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 24px;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        .close-modal:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            display: none;
+            z-index: 999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .context-menu.active {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .context-menu-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .context-menu-item.danger {
+            color: var(--danger);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                left: -300px;
+                height: 100%;
+                z-index: 100;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .sidebar.collapsed {
+                left: -60px;
+            }
+
+            .video-container {
+                flex-direction: column;
+            }
+
+            .video-player {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <path d="M8 4L16 12L8 20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                <path d="M16 12L24 4L24 28L16 20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <span>KAI</span>
+        </div>
+        <div class="header-right">
+            <div class="theme-toggle" id="themeToggle">
+                <span id="darkMode" class="active">🌙</span>
+                <span id="lightMode">☀️</span>
+            </div>
+            <button class="icon-btn">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <circle cx="10" cy="4" r="2"/>
+                    <circle cx="10" cy="10" r="2"/>
+                    <circle cx="10" cy="16" r="2"/>
+                </svg>
+            </button>
+            <div class="avatar">👤</div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="resize-handle" id="resizeHandle"></div>
+            
+            <div class="sidebar-header">
+                <button class="collapse-btn" id="collapseBtn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="5" x2="17" y2="5"/>
+                        <line x1="3" y1="10" x2="17" y2="10"/>
+                        <line x1="3" y1="15" x2="17" y2="15"/>
+                    </svg>
+                </button>
+                <button class="new-conversation-btn" id="newConversationBtn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="3" x2="8" y2="13"/>
+                        <line x1="3" y1="8" x2="13" y2="8"/>
+                    </svg>
+                    <span>New Conversation</span>
+                </button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Search Conversations" id="searchInput">
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="filter-chips">
+                <div class="filter-chip active" data-filter="all">
+                    <span>All</span>
+                </div>
+                <div class="filter-chip" data-filter="favorites">
+                    <span>⭐</span>
+                    <span>Favorites</span>
+                </div>
+                <div class="filter-chip" data-filter="shared">
+                    <span>👥</span>
+                    <span>Shared</span>
+                </div>
+                <div class="filter-chip" data-filter="private">
+                    <span>🔒</span>
+                    <span>Private</span>
+                </div>
+            </div>
+
+            <div class="conversations-list" id="conversationsList">
+                <!-- Favorites Section -->
+                <div class="conversation-section collapsed" id="favoritesSection">
+                    <div class="section-header" data-section="favorites">
+                        <div class="section-header-left">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" class="section-toggle">
+                                <path d="M4 6l3 3 3-3"/>
+                            </svg>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 2l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L8 11l-3.5 2.5 1.5-4.5-3.5-2.5h4.5L8 2z"/>
+                            </svg>
+                            <span>Favorites</span>
+                        </div>
+                        <span class="section-count" id="favoritesCount">0</span>
+                    </div>
+                    <div class="empty-section" id="favoritesEmpty">No favorite conversations yet</div>
+                </div>
+
+                <!-- Recent Section -->
+                <div class="conversation-section collapsed" id="recentSection">
+                    <div class="section-header" data-section="recent">
+                        <div class="section-header-left">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" class="section-toggle">
+                                <path d="M4 6l3 3 3-3"/>
+                            </svg>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 1a5 5 0 110 10A5 5 0 018 3zm0 1v4l3 2"/>
+                            </svg>
+                            <span>Recent</span>
+                        </div>
+                        <span class="section-count" id="recentCount">0</span>
+                    </div>
+                </div>
+
+                <!-- Shared Conversations -->
+                <div class="conversation-section collapsed" id="sharedSection">
+                    <div class="section-header" data-section="shared">
+                        <div class="section-header-left">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" class="section-toggle">
+                                <path d="M4 6l3 3 3-3"/>
+                            </svg>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 2a2 2 0 012 2v1a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2h4zm0 7a2 2 0 012 2v1a2 2 0 01-2 2H4a2 2 0 01-2-2v-1a2 2 0 012-2h4z"/>
+                                <circle cx="12" cy="4.5" r="1.5"/>
+                                <circle cx="12" cy="11.5" r="1.5"/>
+                            </svg>
+                            <span>Shared</span>
+                        </div>
+                        <span class="section-count" id="sharedCount">0</span>
+                    </div>
+                    <div class="conversation-item active" data-id="1" data-title="Momentos de vergüenza de Bea" data-type="shared" data-date="2025-11-19">
+                        <span class="conversation-icon">💬</span>
+                        <div style="flex: 1; min-width: 0;">
+                            <div class="conversation-text">Momentos de vergüenza de Bea</div>
+                            <div class="conversation-meta">
+                                <span>Today</span>
+                            </div>
+                        </div>
+                        <div class="conversation-actions">
+                            <button class="action-btn favorite-btn" title="Favorite">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M8 2l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L8 11l-3.5 2.5 1.5-4.5-3.5-2.5h4.5L8 2z"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn more-btn" title="More actions">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <circle cx="8" cy="3" r="1.5"/>
+                                    <circle cx="8" cy="8" r="1.5"/>
+                                    <circle cx="8" cy="13" r="1.5"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="conversation-item" data-id="2" data-title="Momentos de Chiara emocionada" data-type="shared" data-date="2025-11-18">
+                        <span class="conversation-icon">💬</span>
+                        <div style="flex: 1; min-width: 0;">
+                            <div class="conversation-text">Momentos de Chiara emocionada</div>
+                            <div class="conversation-meta">
+                                <span>Yesterday</span>
+                            </div>
+                        </div>
+                        <div class="conversation-actions">
+                            <button class="action-btn favorite-btn active" title="Favorite">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M8 2l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L8 11l-3.5 2.5 1.5-4.5-3.5-2.5h4.5L8 2z"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn more-btn" title="More actions">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <circle cx="8" cy="3" r="1.5"/>
+                                    <circle cx="8" cy="8" r="1.5"/>
+                                    <circle cx="8" cy="13" r="1.5"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="conversation-item" data-id="3" data-title="Momentos destacados con una botella" data-type="shared" data-date="2025-11-15">
+                        <span class="conversation-icon">💬</span>
+                        <div style="flex: 1; min-width: 0;">
+                            <div class="conversation-text">Momentos destacados con una botella</div>
+                            <div class="conversation-meta">
+                                <span>4 days ago</span>
+                            </div>
+                        </div>
+                        <div class="conversation-actions">
+                            <button class="action-btn favorite-btn active" title="Favorite">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M8 2l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L8 11l-3.5 2.5 1.5-4.5-3.5-2.5h4.5L8 2z"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn more-btn" title="More actions">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <circle cx="8" cy="3" r="1.5"/>
+                                    <circle cx="8" cy="8" r="1.5"/>
+                                    <circle cx="8" cy="13" r="1.5"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Private Conversations -->
+                <div class="conversation-section collapsed" id="privateSection">
+                    <div class="section-header" data-section="private">
+                        <div class="section-header-left">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" class="section-toggle">
+                                <path d="M4 6l3 3 3-3"/>
+                            </svg>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 1a3 3 0 013 3v2h1a1 1 0 011 1v7a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1h1V4a3 3 0 013-3zm0 1a2 2 0 00-2 2v2h4V4a2 2 0 00-2-2z"/>
+                            </svg>
+                            <span>Private</span>
+                        </div>
+                        <span class="section-count" id="privateCount">0</span>
+                    </div>
+                    <div class="conversation-item" data-id="4" data-title="Incidencia a la classe de Bea, Naiara i Abril" data-type="private" data-date="2025-11-17">
+                        <span class="conversation-icon">💬</span>
+                        <div style="flex: 1; min-width: 0;">
+                            <div class="conversation-text">Incidencia a la classe de Bea, Naiara i Abril</div>
+                            <div class="conversation-meta">
+                                <span>2 days ago</span>
+                            </div>
+                        </div>
+                        <div class="conversation-actions">
+                            <button class="action-btn favorite-btn" title="Favorite">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M8 2l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L8 11l-3.5 2.5 1.5-4.5-3.5-2.5h4.5L8 2z"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn more-btn" title="More actions">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <circle cx="8" cy="3" r="1.5"/>
+                                    <circle cx="8" cy="8" r="1.5"/>
+                                    <circle cx="8" cy="13" r="1.5"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="conversation-item" data-id="5" data-title="Búsqueda de momentos cariñosos de Martín" data-type="private" data-date="2025-11-10">
+                        <span class="conversation-icon">💬</span>
+                        <div style="flex: 1; min-width: 0;">
+                            <div class="conversation-text">Búsqueda de momentos cariñosos de Martín</div>
+                            <div class="conversation-meta">
+                                <span>9 days ago</span>
+                            </div>
+                        </div>
+                        <div class="conversation-actions">
+                            <button class="action-btn favorite-btn" title="Favorite">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M8 2l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L8 11l-3.5 2.5 1.5-4.5-3.5-2.5h4.5L8 2z"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn more-btn" title="More actions">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <circle cx="8" cy="3" r="1.5"/>
+                                    <circle cx="8" cy="8" r="1.5"/>
+                                    <circle cx="8" cy="13" r="1.5"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <input type="text" class="chat-title-input" id="chatTitleInput" value="Momentos de vergüenza de Bea" readonly>
+                    <button class="icon-btn" id="editTitleBtn" title="Edit title">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M2 11.5V14h2.5L12.5 6l-2.5-2.5L2 11.5z"/>
+                            <path d="M11 2.5l2.5 2.5"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="chat-actions">
+                    <button class="icon-btn" id="shareBtn" title="Share">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="13" cy="4" r="2"/>
+                            <circle cx="5" cy="9" r="2"/>
+                            <circle cx="13" cy="14" r="2"/>
+                            <line x1="7" y1="9" x2="11" y2="5"/>
+                            <line x1="7" y1="9" x2="11" y2="13"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" id="settingsBtn" title="Settings">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="9" cy="9" r="3"/>
+                            <path d="M9 1v2M9 15v2M1 9h2M15 9h2M3.5 3.5l1.4 1.4M13.1 13.1l1.4 1.4M3.5 14.5l1.4-1.4M13.1 4.9l1.4-1.4"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" id="closeConversationBtn" title="Close">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="4" y1="4" x2="14" y2="14"/>
+                            <line x1="14" y1="4" x2="4" y2="14"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <!-- User Message -->
+                <div class="message user">
+                    <div class="message-avatar">👤</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">You</span>
+                            <span class="message-time">Today at 14:23</span>
+                        </div>
+                        <div class="message-body">
+                            Dame los momentos donde Bea pasa vergüenza durante los ensayos de la semana 3.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Response with Video -->
+                <div class="message">
+                    <div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">K</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">KAI</span>
+                            <span class="message-time">Today at 14:23</span>
+                        </div>
+                        <div class="message-body">
+                            <p>Momentos donde Bea pasa vergüenza durante los ensayos de la semana 3</p>
+                            
+                            <div class="video-result" id="videoResult">
+                                <div class="video-container">
+                                    <video class="video-player" controls>
+                                        <source src="sample-video.mp4" type="video/mp4">
+                                    </video>
+                                    <div class="video-info">
+                                        <div class="video-title">Momentos donde Bea pasa vergüenza durante los ensayos de la semana 3</div>
+                                        <div class="video-meta">
+                                            <div class="meta-item">
+                                                <span class="meta-label">Resultados encontrados</span>
+                                                <span class="meta-value">3 cortes</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <span class="meta-label">Duración</span>
+                                                <span class="meta-value">3m 36s</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <span class="meta-label">Prompt utilizado</span>
+                                                <span class="meta-value">Prioriza resultados última semana y exportación ALE</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="cuts-list" id="cutsList">
+                                    <div class="cut-item" draggable="true">
+                                        <div class="drag-handle">
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                <circle cx="6" cy="4" r="1.5"/>
+                                                <circle cx="10" cy="4" r="1.5"/>
+                                                <circle cx="6" cy="8" r="1.5"/>
+                                                <circle cx="10" cy="8" r="1.5"/>
+                                                <circle cx="6" cy="12" r="1.5"/>
+                                                <circle cx="10" cy="12" r="1.5"/>
+                                            </svg>
+                                        </div>
+                                        <div class="cut-thumbnail">
+                                            <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=120&h=68&fit=crop" alt="Cut 1">
+                                        </div>
+                                        <div class="cut-details">
+                                            <div class="cut-timecode">17/10/2025 | 10:23:45.05 | 2 mins</div>
+                                            <div class="cut-description">Bea olvida parte de la letra durante un ensayo grupal. Se tapa la cara riendo mientras sus compañeros la animan.</div>
+                                        </div>
+                                        <div class="cut-actions">
+                                            <button class="icon-btn" title="Edit timecode">
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                    <path d="M2 11.5V14h2.5L12.5 6l-2.5-2.5L2 11.5z"/>
+                                                </svg>
+                                            </button>
+                                            <button class="icon-btn" title="Remove">
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                    <path d="M3 4v9a1 1 0 001 1h8a1 1 0 001-1V4M2 4h12M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="cut-item" draggable="true">
+                                        <div class="drag-handle">
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                <circle cx="6" cy="4" r="1.5"/>
+                                                <circle cx="10" cy="4" r="1.5"/>
+                                                <circle cx="6" cy="8" r="1.5"/>
+                                                <circle cx="10" cy="8" r="1.5"/>
+                                                <circle cx="6" cy="12" r="1.5"/>
+                                                <circle cx="10" cy="12" r="1.5"/>
+                                            </svg>
+                                        </div>
+                                        <div class="cut-thumbnail">
+                                            <img src="https://images.unsplash.com/photo-1574169208507-84376144848b?w=120&h=68&fit=crop" alt="Cut 2">
+                                        </div>
+                                        <div class="cut-details">
+                                            <div class="cut-timecode">18/10/2025 | 12:33:40.15 | 1 min</div>
+                                            <div class="cut-description">En el ensayo con la coreógrafa, Bea tropieza durante un giro y se le escucha decir: "Madre mía, qué vergüenza!"</div>
+                                        </div>
+                                        <div class="cut-actions">
+                                            <button class="icon-btn" title="Edit timecode">
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                    <path d="M2 11.5V14h2.5L12.5 6l-2.5-2.5L2 11.5z"/>
+                                                </svg>
+                                            </button>
+                                            <button class="icon-btn" title="Remove">
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                    <path d="M3 4v9a1 1 0 001 1h8a1 1 0 001-1V4M2 4h12M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="cut-item" draggable="true">
+                                        <div class="drag-handle">
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                <circle cx="6" cy="4" r="1.5"/>
+                                                <circle cx="10" cy="4" r="1.5"/>
+                                                <circle cx="6" cy="8" r="1.5"/>
+                                                <circle cx="10" cy="8" r="1.5"/>
+                                                <circle cx="6" cy="12" r="1.5"/>
+                                                <circle cx="10" cy="12" r="1.5"/>
+                                            </svg>
+                                        </div>
+                                        <div class="cut-thumbnail">
+                                            <img src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=120&h=68&fit=crop" alt="Cut 3">
+                                        </div>
+                                        <div class="cut-details">
+                                            <div class="cut-timecode">19/10/2025 | 16:32:45.00 | 36s</div>
+                                            <div class="cut-description">Momento en el que la tensión aumenta debido a la presión que los profesores ejercen hacia Bea. Ella decide abandonar el ensayo.</div>
+                                        </div>
+                                        <div class="cut-actions">
+                                            <button class="icon-btn" title="Edit timecode">
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                    <path d="M2 11.5V14h2.5L12.5 6l-2.5-2.5L2 11.5z"/>
+                                                </svg>
+                                            </button>
+                                            <button class="icon-btn" title="Remove">
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                    <path d="M3 4v9a1 1 0 001 1h8a1 1 0 001-1V4M2 4h12M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="result-actions">
+                                    <div class="iteration-nav">
+                                        <button class="btn btn-secondary" id="prevVersion">
+                                            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                                                <path d="M9 2L4 7l5 5"/>
+                                            </svg>
+                                        </button>
+                                        <span style="font-size: 14px; color: var(--text-secondary);" id="versionInfo">Version 1 of 3</span>
+                                        <button class="btn btn-secondary" id="nextVersion">
+                                            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                                                <path d="M5 2l5 5-5 5"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button class="btn btn-secondary">
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                <path d="M8 2v6l4 2"/>
+                                                <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                            </svg>
+                                            Refinar
+                                        </button>
+                                        <button class="btn btn-primary" id="exportBtn">
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                <path d="M8 2v8M5 7l3 3 3-3M2 12v2h12v-2"/>
+                                            </svg>
+                                            Export
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <textarea class="chat-input" id="chatInput" placeholder="Type your message here..." rows="1"></textarea>
+                    <button class="send-btn" id="sendBtn">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+                            <path d="M2 9l14-7-7 14-2-7-5-0z"/>
+                        </svg>
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" data-action="share">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="3" r="2"/>
+                <circle cx="4" cy="8" r="2"/>
+                <circle cx="12" cy="13" r="2"/>
+                <line x1="6" y1="8" x2="10" y2="4"/>
+                <line x1="6" y1="8" x2="10" y2="12"/>
+            </svg>
+            Share
+        </div>
+        <div class="context-menu-item" data-action="export">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 2v8M5 7l3 3 3-3M2 12v2h12v-2"/>
+            </svg>
+            Export
+        </div>
+        <div class="context-menu-item danger" data-action="delete">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M3 4v9a1 1 0 001 1h8a1 1 0 001-1V4M2 4h12M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1"/>
+            </svg>
+            Delete
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal" id="shareModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Share Conversation</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Share with:</label>
+                    <input type="text" class="form-input" placeholder="Enter email addresses">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Permission:</label>
+                    <select class="form-select">
+                        <option>Can view</option>
+                        <option>Can edit</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary">Cancel</button>
+                <button class="btn btn-primary">Share</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Export Results</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Export format:</label>
+                    <select class="form-select">
+                        <option>EDL for Premiere Pro</option>
+                        <option>XML for Final Cut Pro</option>
+                        <option>ALE for Avid Media Composer</option>
+                        <option>CSV Timecode List</option>
+                        <option>JSON</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">File name:</label>
+                    <input type="text" class="form-input" value="momentos-bea-semana3">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary">Cancel</button>
+                <button class="btn btn-primary">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Conversation Settings</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Active Prompt:</label>
+                    <select class="form-select">
+                        <option>Prioriza resultados última semana y exportación ALE</option>
+                        <option>Evita sensacionalismos y ofrece códigos de tiempo al frame</option>
+                        <option>Busca momentos emotivos con música de fondo</option>
+                        <option>Prioriza calidad de imagen HD</option>
+                        <option>Custom prompt...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Search in:</label>
+                    <select class="form-select">
+                        <option>All footage</option>
+                        <option>Last week</option>
+                        <option>Last month</option>
+                        <option>Custom date range...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary">Cancel</button>
+                <button class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data for 3 versions
+        const versions = [
+            {
+                title: "Version 1",
+                cuts: [
+                    {
+                        img: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=120&h=68&fit=crop",
+                        timecode: "17/10/2025 | 10:23:45.05 | 2 mins",
+                        description: "Bea olvida parte de la letra durante un ensayo grupal. Se tapa la cara riendo mientras sus compañeros la animan."
+                    },
+                    {
+                        img: "https://images.unsplash.com/photo-1574169208507-84376144848b?w=120&h=68&fit=crop",
+                        timecode: "18/10/2025 | 12:33:40.15 | 1 min",
+                        description: "En el ensayo con la coreógrafa, Bea tropieza durante un giro y se le escucha decir: \"Madre mía, qué vergüenza!\""
+                    },
+                    {
+                        img: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=120&h=68&fit=crop",
+                        timecode: "19/10/2025 | 16:32:45.00 | 36s",
+                        description: "Momento en el que la tensión aumenta debido a la presión que los profesores ejercen hacia Bea. Ella decide abandonar el ensayo."
+                    }
+                ]
+            },
+            {
+                title: "Version 2",
+                cuts: [
+                    {
+                        img: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120&h=68&fit=crop",
+                        timecode: "17/10/2025 | 14:15:20.10 | 1.5 mins",
+                        description: "Bea se equivoca de micrófono y empieza a cantar sin audio. Los técnicos corren a solucionar el problema."
+                    },
+                    {
+                        img: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=120&h=68&fit=crop",
+                        timecode: "18/10/2025 | 09:45:30.20 | 45s",
+                        description: "Durante el ensayo matutino, Bea llega tarde y todos la esperan. Se disculpa avergonzada."
+                    }
+                ]
+            },
+            {
+                title: "Version 3",
+                cuts: [
+                    {
+                        img: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=120&h=68&fit=crop",
+                        timecode: "17/10/2025 | 11:30:15.00 | 3 mins",
+                        description: "Bea confunde los pasos de baile y choca con otro bailarín. Ambos ríen de la situación."
+                    },
+                    {
+                        img: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=120&h=68&fit=crop",
+                        timecode: "18/10/2025 | 15:20:40.05 | 2 mins",
+                        description: "En plena actuación de ensayo, Bea olvida la coreografía completa y se queda inmóvil."
+                    },
+                    {
+                        img: "https://images.unsplash.com/photo-1501612780327-45045538702b?w=120&h=68&fit=crop",
+                        timecode: "19/10/2025 | 13:10:25.15 | 1 min",
+                        description: "Bea tropieza con el cable del micrófono y casi cae al suelo. Todos aplauden su recuperación."
+                    },
+                    {
+                        img: "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=120&h=68&fit=crop",
+                        timecode: "19/10/2025 | 17:55:10.00 | 50s",
+                        description: "Al final del ensayo, Bea intenta hacer una reverencia pero pierde el equilibrio."
+                    }
+                ]
+            }
+        ];
+
+        let currentVersion = 0;
+        let conversationCounter = 5;
+        let activeFilter = 'all';
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const darkMode = document.getElementById('darkMode');
+        const lightMode = document.getElementById('lightMode');
+        const body = document.body;
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-mode');
+            darkMode.classList.toggle('active');
+            lightMode.classList.toggle('active');
+        });
+
+        // Sidebar Collapse
+        const sidebar = document.getElementById('sidebar');
+        const collapseBtn = document.getElementById('collapseBtn');
+
+        collapseBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
+        // Sidebar Resize
+        const resizeHandle = document.getElementById('resizeHandle');
+        let isResizing = false;
+
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            resizeHandle.classList.add('resizing');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            
+            const newWidth = e.clientX;
+            if (newWidth >= 200 && newWidth <= 600) {
+                document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
+                sidebar.style.width = newWidth + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizeHandle.classList.remove('resizing');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+
+        // Update section counts
+        function updateSectionCounts() {
+            const allConversations = document.querySelectorAll('.conversation-item');
+            
+            // Count favorites
+            const favorites = Array.from(allConversations).filter(conv => 
+                conv.querySelector('.favorite-btn').classList.contains('active')
+            );
+            document.getElementById('favoritesCount').textContent = favorites.length;
+            
+            // Update favorites section
+            const favoritesSection = document.getElementById('favoritesSection');
+            const favoritesEmpty = document.getElementById('favoritesEmpty');
+            const existingFavorites = favoritesSection.querySelectorAll('.conversation-item');
+            existingFavorites.forEach(fav => fav.remove());
+            
+            if (favorites.length > 0) {
+                favoritesEmpty.style.display = 'none';
+                favorites.forEach(fav => {
+                    const clone = fav.cloneNode(true);
+                    setupConversationItem(clone);
+                    favoritesSection.appendChild(clone);
+                });
+            } else {
+                favoritesEmpty.style.display = 'block';
+            }
+            
+            // Count recent (last 7 days)
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 7);
+            
+            const recent = Array.from(allConversations).filter(conv => {
+                const dateStr = conv.dataset.date;
+                if (!dateStr) return false;
+                const convDate = new Date(dateStr);
+                return convDate >= sevenDaysAgo;
+            });
+            
+            document.getElementById('recentCount').textContent = recent.length;
+            
+            // Update recent section
+            const recentSection = document.getElementById('recentSection');
+            const existingRecent = recentSection.querySelectorAll('.conversation-item');
+            existingRecent.forEach(rec => rec.remove());
+            
+            recent.forEach(rec => {
+                const clone = rec.cloneNode(true);
+                setupConversationItem(clone);
+                recentSection.appendChild(clone);
+            });
+            
+            // Count shared and private
+            const shared = Array.from(allConversations).filter(conv => conv.dataset.type === 'shared');
+            const private_ = Array.from(allConversations).filter(conv => conv.dataset.type === 'private');
+            
+            document.getElementById('sharedCount').textContent = shared.length;
+            document.getElementById('privateCount').textContent = private_.length;
+        }
+
+        // Filter chips
+        const filterChips = document.querySelectorAll('.filter-chip');
+        filterChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                filterChips.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                activeFilter = chip.dataset.filter;
+                applyFilter();
+            });
+        });
+
+        function applyFilter() {
+            const sections = document.querySelectorAll('.conversation-section');
+            
+            sections.forEach(section => {
+                const sectionId = section.id;
+                
+                if (activeFilter === 'all') {
+                    section.style.display = 'block';
+                } else if (activeFilter === 'favorites') {
+                    section.style.display = sectionId === 'favoritesSection' ? 'block' : 'none';
+                } else if (activeFilter === 'shared') {
+                    section.style.display = sectionId === 'sharedSection' ? 'block' : 'none';
+                } else if (activeFilter === 'private') {
+                    section.style.display = sectionId === 'privateSection' ? 'block' : 'none';
+                }
+            });
+        }
+
+        // Section collapse/expand
+        const sectionHeaders = document.querySelectorAll('.section-header');
+        sectionHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const section = header.closest('.conversation-section');
+                section.classList.toggle('collapsed');
+            });
+        });
+
+        // Edit Title
+        const chatTitleInput = document.getElementById('chatTitleInput');
+        const editTitleBtn = document.getElementById('editTitleBtn');
+        let isEditingTitle = false;
+
+        editTitleBtn.addEventListener('click', () => {
+            if (!isEditingTitle) {
+                chatTitleInput.removeAttribute('readonly');
+                chatTitleInput.focus();
+                chatTitleInput.select();
+                isEditingTitle = true;
+            }
+        });
+
+        chatTitleInput.addEventListener('blur', () => {
+            chatTitleInput.setAttribute('readonly', 'true');
+            isEditingTitle = false;
+            
+            // Update conversation item title
+            const activeConv = document.querySelector('.conversation-item.active');
+            if (activeConv) {
+                activeConv.querySelector('.conversation-text').textContent = chatTitleInput.value;
+                activeConv.dataset.title = chatTitleInput.value;
+            }
+        });
+
+        chatTitleInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                chatTitleInput.blur();
+            }
+        });
+
+        // Close Conversation
+        const closeConversationBtn = document.getElementById('closeConversationBtn');
+        closeConversationBtn.addEventListener('click', () => {
+            document.querySelectorAll('.conversation-item').forEach(i => i.classList.remove('active'));
+            document.getElementById('chatMessages').innerHTML = `
+                <div class="empty-state">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M8 32h48M32 8v48"/>
+                    </svg>
+                    <h2>Create a new conversation or select an existing one to get started.</h2>
+                </div>
+            `;
+            chatTitleInput.value = '';
+        });
+
+        // Setup conversation item (reusable function)
+        function setupConversationItem(item) {
+            item.addEventListener('click', (e) => {
+                if (!e.target.closest('.action-btn')) {
+                    document.querySelectorAll('.conversation-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    const title = item.dataset.title;
+                    chatTitleInput.value = title;
+                    
+                    loadConversationContent();
+                }
+            });
+
+            const favoriteBtn = item.querySelector('.favorite-btn');
+            favoriteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                favoriteBtn.classList.toggle('active');
+                const svg = favoriteBtn.querySelector('svg');
+                if (favoriteBtn.classList.contains('active')) {
+                    svg.setAttribute('fill', 'currentColor');
+                } else {
+                    svg.setAttribute('fill', 'none');
+                }
+                updateSectionCounts();
+            });
+
+            const moreBtn = item.querySelector('.more-btn');
+            moreBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const rect = moreBtn.getBoundingClientRect();
+                contextMenu.style.left = rect.left + 'px';
+                contextMenu.style.top = (rect.bottom + 5) + 'px';
+                contextMenu.classList.add('active');
+            });
+        }
+
+        // Conversation Selection (initial setup)
+        const conversationItems = document.querySelectorAll('.conversation-item');
+        conversationItems.forEach(item => {
+            setupConversationItem(item);
+        });
+
+        function loadConversationContent() {
+            currentVersion = 0;
+            document.getElementById('chatMessages').innerHTML = `
+                <!-- User Message -->
+                <div class="message user">
+                    <div class="message-avatar">👤</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">You</span>
+                            <span class="message-time">Today at 14:23</span>
+                        </div>
+                        <div class="message-body">
+                            Dame los momentos donde Bea pasa vergüenza durante los ensayos de la semana 3.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Response -->
+                <div class="message">
+                    <div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">K</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">KAI</span>
+                            <span class="message-time">Today at 14:23</span>
+                        </div>
+                        <div class="message-body">
+                            <p>Momentos donde Bea pasa vergüenza durante los ensayos de la semana 3</p>
+                            ${generateVideoResult()}
+                        </div>
+                    </div>
+                </div>
+            `;
+            setupDragAndDrop();
+            updateVersionButtons();
+        }
+
+        function generateVideoResult() {
+            const version = versions[currentVersion];
+            const cutsHTML = version.cuts.map(cut => `
+                <div class="cut-item" draggable="true">
+                    <div class="drag-handle">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <circle cx="6" cy="4" r="1.5"/>
+                            <circle cx="10" cy="4" r="1.5"/>
+                            <circle cx="6" cy="8" r="1.5"/>
+                            <circle cx="10" cy="8" r="1.5"/>
+                            <circle cx="6" cy="12" r="1.5"/>
+                            <circle cx="10" cy="12" r="1.5"/>
+                        </svg>
+                    </div>
+                    <div class="cut-thumbnail">
+                        <img src="${cut.img}" alt="Cut">
+                    </div>
+                    <div class="cut-details">
+                        <div class="cut-timecode">${cut.timecode}</div>
+                        <div class="cut-description">${cut.description}</div>
+                    </div>
+                    <div class="cut-actions">
+                        <button class="icon-btn" title="Edit timecode">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M2 11.5V14h2.5L12.5 6l-2.5-2.5L2 11.5z"/>
+                            </svg>
+                        </button>
+                        <button class="icon-btn" title="Remove">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M3 4v9a1 1 0 001 1h8a1 1 0 001-1V4M2 4h12M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            return `
+                <div class="video-result">
+                    <div class="video-container">
+                        <video class="video-player" controls>
+                            <source src="sample-video.mp4" type="video/mp4">
+                        </video>
+                        <div class="video-info">
+                            <div class="video-title">Momentos donde Bea pasa vergüenza durante los ensayos de la semana 3</div>
+                            <div class="video-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Resultados encontrados</span>
+                                    <span class="meta-value">${version.cuts.length} cortes</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Duración</span>
+                                    <span class="meta-value">3m 36s</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Prompt utilizado</span>
+                                    <span class="meta-value">Prioriza resultados última semana y exportación ALE</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cuts-list" id="cutsList">
+                        ${cutsHTML}
+                    </div>
+                    <div class="result-actions">
+                        <div class="iteration-nav">
+                            <button class="btn btn-secondary" id="prevVersion">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                                    <path d="M9 2L4 7l5 5"/>
+                                </svg>
+                            </button>
+                            <span style="font-size: 14px; color: var(--text-secondary);" id="versionInfo">Version ${currentVersion + 1} of ${versions.length}</span>
+                            <button class="btn btn-secondary" id="nextVersion">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                                    <path d="M5 2l5 5-5 5"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-secondary">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M8 2v6l4 2"/>
+                                    <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                </svg>
+                                Refinar
+                            </button>
+                            <button class="btn btn-primary" id="exportBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M8 2v8M5 7l3 3 3-3M2 12v2h12v-2"/>
+                                </svg>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateVersionButtons() {
+            setTimeout(() => {
+                const prevBtn = document.getElementById('prevVersion');
+                const nextBtn = document.getElementById('nextVersion');
+                const versionInfo = document.getElementById('versionInfo');
+                
+                if (prevBtn && nextBtn && versionInfo) {
+                    prevBtn.disabled = currentVersion === 0;
+                    nextBtn.disabled = currentVersion === versions.length - 1;
+                    versionInfo.textContent = `Version ${currentVersion + 1} of ${versions.length}`;
+                    
+                    prevBtn.onclick = () => {
+                        if (currentVersion > 0) {
+                            currentVersion--;
+                            loadConversationContent();
+                        }
+                    };
+                    
+                    nextBtn.onclick = () => {
+                        if (currentVersion < versions.length - 1) {
+                            currentVersion++;
+                            loadConversationContent();
+                        }
+                    };
+                }
+
+                const exportBtn = document.getElementById('exportBtn');
+                if (exportBtn) {
+                    exportBtn.onclick = () => {
+                        document.getElementById('exportModal').classList.add('active');
+                    };
+                }
+            }, 100);
+        }
+
+        updateVersionButtons();
+
+        // New Conversation
+        const newConversationBtn = document.getElementById('newConversationBtn');
+        newConversationBtn.addEventListener('click', () => {
+            conversationCounter++;
+            const today = new Date().toISOString().split('T')[0];
+            
+            const privateSection = document.getElementById('privateSection');
+            
+            const newConv = document.createElement('div');
+            newConv.className = 'conversation-item';
+            newConv.dataset.id = conversationCounter;
+            newConv.dataset.title = 'New Conversation';
+            newConv.dataset.type = 'private';
+            newConv.dataset.date = today;
+            newConv.innerHTML = `
+                <span class="conversation-icon">💬</span>
+                <div style="flex: 1; min-width: 0;">
+                    <div class="conversation-text">New Conversation</div>
+                    <div class="conversation-meta">
+                        <span>Just now</span>
+                    </div>
+                </div>
+                <div class="conversation-actions">
+                    <button class="action-btn favorite-btn" title="Favorite">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M8 2l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L8 11l-3.5 2.5 1.5-4.5-3.5-2.5h4.5L8 2z"/>
+                        </svg>
+                    </button>
+                    <button class="action-btn more-btn" title="More actions">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <circle cx="8" cy="3" r="1.5"/>
+                            <circle cx="8" cy="8" r="1.5"/>
+                            <circle cx="8" cy="13" r="1.5"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            privateSection.appendChild(newConv);
+            setupConversationItem(newConv);
+            
+            document.querySelectorAll('.conversation-item').forEach(i => i.classList.remove('active'));
+            newConv.classList.add('active');
+            
+            chatTitleInput.value = 'New Conversation';
+            
+            document.getElementById('chatMessages').innerHTML = `
+                <div class="empty-state">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="32" cy="32" r="20"/>
+                        <path d="M22 32h20M32 22v20"/>
+                    </svg>
+                    <h2>Start typing to begin your conversation with KAI</h2>
+                </div>
+            `;
+            
+            updateSectionCounts();
+        });
+
+        // Send Message
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message) {
+                const chatMessages = document.getElementById('chatMessages');
+                const now = new Date();
+                const timeStr = `Today at ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+                
+                const emptyState = chatMessages.querySelector('.empty-state');
+                if (emptyState) {
+                    chatMessages.innerHTML = '';
+                }
+                
+                const userMessage = document.createElement('div');
+                userMessage.className = 'message user';
+                userMessage.innerHTML = `
+                    <div class="message-avatar">👤</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">You</span>
+                            <span class="message-time">${timeStr}</span>
+                        </div>
+                        <div class="message-body">
+                            ${message}
+                        </div>
+                    </div>
+                `;
+                chatMessages.appendChild(userMessage);
+                
+                chatInput.value = '';
+                chatInput.style.height = 'auto';
+                
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                setTimeout(() => {
+                    const aiMessage = document.createElement('div');
+                    aiMessage.className = 'message';
+                    aiMessage.innerHTML = `
+                        <div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">K</div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span class="message-author">KAI</span>
+                                <span class="message-time">${timeStr}</span>
+                            </div>
+                            <div class="message-body">
+                                <p>Entendido. Estoy buscando contenido relacionado con tu consulta...</p>
+                            </div>
+                        </div>
+                    `;
+                    chatMessages.appendChild(aiMessage);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 1000);
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+
+        // Context Menu
+        const contextMenu = document.getElementById('contextMenu');
+
+        document.addEventListener('click', () => {
+            contextMenu.classList.remove('active');
+        });
+
+        // Modals
+        const shareBtn = document.getElementById('shareBtn');
+        const shareModal = document.getElementById('shareModal');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const exportModal = document.getElementById('exportModal');
+
+        shareBtn.addEventListener('click', () => {
+            shareModal.classList.add('active');
+        });
+
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.add('active');
+        });
+
+        document.querySelectorAll('.close-modal, .btn-secondary').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            });
+        });
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        document.querySelectorAll('.context-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const action = item.dataset.action;
+                if(action === 'share') {
+                    shareModal.classList.add('active');
+                } else if (action === 'export') {
+                    exportModal.classList.add('active');
+                } else if (action === 'delete') {
+                    if (confirm('Are you sure you want to delete this conversation?')) {
+                        const activeConv = document.querySelector('.conversation-item.active');
+                        if (activeConv) {
+                            activeConv.remove();
+                            closeConversationBtn.click();
+                            updateSectionCounts();
+                        }
+                    }
+                }
+                contextMenu.classList.remove('active');
+            });
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.conversation-item').forEach(item => {
+                const text = item.querySelector('.conversation-text').textContent.toLowerCase();
+                item.style.display = text.includes(query) ? 'flex' : 'none';
+            });
+        });
+
+        // Drag and Drop
+        function setupDragAndDrop() {
+            const cutsList = document.getElementById('cutsList');
+            if (!cutsList) return;
+
+            let draggedElement = null;
+
+            cutsList.addEventListener('dragstart', (e) => {
+                if (e.target.classList.contains('cut-item')) {
+                    draggedElement = e.target;
+                    e.target.classList.add('dragging');
+                }
+            });
+
+            cutsList.addEventListener('dragend', (e) => {
+                if (e.target.classList.contains('cut-item')) {
+                    e.target.classList.remove('dragging');
+                }
+            });
+
+            cutsList.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(cutsList, e.clientY);
+                if (afterElement == null) {
+                    cutsList.appendChild(draggedElement);
+                } else {
+                    cutsList.insertBefore(draggedElement, afterElement);
+                }
+            });
+
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.cut-item:not(.dragging)')];
+
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+        }
+
+        setupDragAndDrop();
+
+        // Initialize counts
+        updateSectionCounts();
+    </script>
+</body>
+</html>
