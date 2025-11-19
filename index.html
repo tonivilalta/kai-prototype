@@ -17,8 +17,8 @@
             --bg-tertiary: #3a3a3a;
             --text-primary: #ffffff;
             --text-secondary: #b0b0b0;
-            --accent: #4a9eff;
-            --accent-hover: #3d8de6;
+            --accent: #30A5AD;
+            --accent-hover: #231938;
             --border: #404040;
             --danger: #ff4444;
             --warning: #ffaa00;
@@ -186,6 +186,23 @@
             font-size: 14px;
             transition: all 0.3s;
             white-space: nowrap;
+			width: 100%;
+			
+        }
+		
+		search-box {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
         }
 
         .sidebar.collapsed .new-conversation-btn {
@@ -445,20 +462,22 @@
         }
 
         .chat-title {
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 20px;
+            font-weight: 100;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
+			width: 320px;
         }
 
         .chat-title-input {
+			flex:1;
             background: transparent;
             border: 1px solid transparent;
             color: var(--text-primary);
             font-size: 18px;
             font-weight: 600;
-            padding: 4px 8px;
+            padding: 4px 4px;
             border-radius: 4px;
             font-family: inherit;
         }
@@ -989,13 +1008,18 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <div class="logo">
+       <!--<div class="logo">
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
                 <path d="M8 4L16 12L8 20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
                 <path d="M16 12L24 4L24 28L16 20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
             </svg>
             <span>KAI</span>
         </div>
+		-->
+		<div class="logo">
+			<img src="logo-kai.png" alt="Logo" style="height:32px; width:auto;">
+    
+		</div>
         <div class="header-right">
             <div class="theme-toggle" id="themeToggle">
                 <span id="darkMode" class="active">🌙</span>
@@ -1026,15 +1050,17 @@
                         <line x1="3" y1="15" x2="17" y2="15"/>
                     </svg>
                 </button>
-                <button class="new-conversation-btn" id="newConversationBtn">
+               
+            </div>
+			<div>
+			<button class="new-conversation-btn" id="newConversationBtn">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="8" y1="3" x2="8" y2="13"/>
                         <line x1="3" y1="8" x2="13" y2="8"/>
                     </svg>
                     <span>New Conversation</span>
                 </button>
-            </div>
-
+				</div>
             <div class="search-box">
                 <input type="text" class="search-input" placeholder="Search Conversations" id="searchInput">
             </div>
@@ -1249,7 +1275,7 @@
                 <div class="chat-title">
                     <input type="text" class="chat-title-input" id="chatTitleInput" value="Momentos de vergüenza de Bea" readonly>
                     <button class="icon-btn" id="editTitleBtn" title="Edit title">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <svg width="22" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M2 11.5V14h2.5L12.5 6l-2.5-2.5L2 11.5z"/>
                             <path d="M11 2.5l2.5 2.5"/>
                         </svg>
@@ -1297,7 +1323,23 @@
 
                 <!-- AI Response with Video -->
                 <div class="message">
-                    <div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">K</div>
+                     <!--<div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">K</div>-->
+                    <div class="message-avatar" style="
+						background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+						width: 40px;
+						height: 40px;
+						border-radius: 50%;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						overflow: hidden;
+					">
+						<img src="logo-kai-avatar.png" alt="Logo Kai" style="
+							width: 70%;
+							height: 70%;
+							object-fit: contain;
+						">
+					</div>
                     <div class="message-content">
                         <div class="message-header">
                             <span class="message-author">KAI</span>
@@ -1813,7 +1855,8 @@
             });
         });
 
-        // Edit Title
+		
+		// Edit Title
         const chatTitleInput = document.getElementById('chatTitleInput');
         const editTitleBtn = document.getElementById('editTitleBtn');
         let isEditingTitle = false;
@@ -1922,7 +1965,23 @@
 
                 <!-- AI Response -->
                 <div class="message">
-                    <div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">K</div>
+                     <!--<div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">K</div>-->
+                    <div class="message-avatar" style="
+						background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+						width: 40px;
+						height: 40px;
+						border-radius: 50%;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						overflow: hidden;
+					">
+						<img src="logo-kai-avatar.png" alt="Logo Kai" style="
+							width: 70%;
+							height: 70%;
+							object-fit: contain;
+						">
+					</div>
                     <div class="message-content">
                         <div class="message-header">
                             <span class="message-author">KAI</span>
@@ -2173,7 +2232,23 @@
                     const aiMessage = document.createElement('div');
                     aiMessage.className = 'message';
                     aiMessage.innerHTML = `
-                        <div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">K</div>
+                         <!--<div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">K</div>-->
+                    <div class="message-avatar" style="
+						background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+						width: 40px;
+						height: 40px;
+						border-radius: 50%;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						overflow: hidden;
+					">
+						<img src="logo-kai-avatar.png" alt="Logo Kai" style="
+							width: 70%;
+							height: 70%;
+							object-fit: contain;
+						">
+					</div>
                         <div class="message-content">
                             <div class="message-header">
                                 <span class="message-author">KAI</span>
