@@ -308,8 +308,29 @@
             display: flex;
             align-items: center;
             gap: 8px;
+			transition: all 0.3s ease;
+			cursor: pointer;
         }
-
+		.section-header-left:hover span {
+			color: #007bff;
+			font-weight: 600;
+		}
+		
+		.section-header-left svg:not(.section-toggle):hover {
+			color: #ffc107;
+			transform: scale(1.2);
+			filter: drop-shadow(0 0 3px rgba(255, 193, 7, 0.6));
+		}
+		
+		/* Hover en el icono de toggle (flecha) */
+		.section-toggle:hover {
+			color: #007bff;
+			transform: scale(1.2);
+		}
+		/* Animación de la estrella al hacer hover */
+		.section-header-left svg:not(.section-toggle):hover {
+			animation: iconBounce 0.5s ease;
+		}
         .section-count {
             background: var(--bg-tertiary);
             padding: 2px 8px;
